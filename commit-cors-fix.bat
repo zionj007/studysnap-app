@@ -1,0 +1,9 @@
+@echo off
+echo Adding CORS fix to Git...
+git add server/server.js
+echo Committing CORS fix...
+git commit -m "Fix CORS to allow Vercel frontend requests"
+echo Pushing to GitHub...
+git push origin clean-main
+echo Done! Render will auto-redeploy your backend.
+pause
