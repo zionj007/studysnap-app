@@ -24,12 +24,8 @@ if (missingEnvVars.length > 0) {
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'http://localhost:5174',
+    'http://localhost:5174', 
     'https://studysnap-frontend.vercel.app',
-    'https://studysnap-frontend-git-clean-main-zionj007.vercel.app',
-    'https://studysnap-app.vercel.app',
-    'https://studysnap.vercel.app',
-    'https://studysnap-frontend-git-main-zionj007.vercel.app',
     'https://studysnap-frontend-git-clean-main-zionj007.vercel.app',
     process.env.CORS_ORIGIN
   ].filter(Boolean),
