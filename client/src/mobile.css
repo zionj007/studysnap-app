@@ -1,0 +1,86 @@
+/* Mobile-specific styles for StudySnap */
+
+/* Prevent zoom on input focus */
+input, textarea, select {
+  font-size: 16px !important;
+}
+
+/* Touch-friendly button styles */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile navigation improvements */
+@media (max-width: 640px) {
+  /* Stack navigation buttons vertically on mobile */
+  .mobile-nav-stack {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  /* Larger touch targets */
+  .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better spacing for mobile */
+  .mobile-spacing {
+    padding: 1rem;
+    margin: 0.5rem;
+  }
+  
+  /* Mobile-friendly text sizes */
+  .mobile-text {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  
+  /* Mobile quiz options */
+  .mobile-quiz-option {
+    padding: 1rem;
+    margin: 0.5rem 0;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+  }
+  
+  /* Mobile file upload area */
+  .mobile-upload-area {
+    padding: 2rem 1rem;
+    border-width: 3px;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix for iOS Safari viewport issues */
+  .ios-fix {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent iOS zoom on input focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Android Chrome specific fixes */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  /* Fix for Android Chrome */
+  .android-fix {
+    -webkit-appearance: none;
+  }
+}
+
+/* PWA styles */
+@media (display-mode: standalone) {
+  /* Styles for when app is installed as PWA */
+  .pwa-mode {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
