@@ -47,8 +47,8 @@ const UploadBox = ({ onUploadSuccess }) => {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
           return 'http://localhost:3001'
         }
-        // For production, assume backend is on same domain with different port
-        return `${window.location.protocol}//${window.location.hostname}:3001`
+        // For production, use the deployed backend URL
+        return 'https://studysnap-app.onrender.com'
       }
 
       const response = await fetch(`${getApiUrl()}/api/upload`, {
