@@ -22,7 +22,13 @@ if (missingEnvVars.length > 0) {
 
 // Middleware
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174', 
+    'https://studysnap-frontend.vercel.app',
+    'https://studysnap-frontend-git-clean-main-zionj007.vercel.app',
+    process.env.CORS_ORIGIN
+  ].filter(Boolean),
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
