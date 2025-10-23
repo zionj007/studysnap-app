@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 import FilePreview from './FilePreview'
 import LoadingAnimation from './LoadingAnimation'
 
@@ -9,6 +10,7 @@ const UploadBox = ({ onUploadSuccess, onUpgradeClick }) => {
   const [error, setError] = useState(null)
   const [usage, setUsage] = useState(null)
   const [userId] = useState(() => localStorage.getItem('studysnap_userId') || `user_${Date.now()}`)
+  const { getAuthHeaders, isAuthenticated } = useAuth()
 
   // Fetch usage on component mount
   useEffect(() => {
@@ -24,7 +26,10 @@ const UploadBox = ({ onUploadSuccess, onUpgradeClick }) => {
         return 'https://studysnap-app.onrender.com'
       }
 
-      const response = await fetch(`${getApiUrl()}/api/usage?userId=${userId}`)
+      const headers = getAuthHeaders()
+      const response = await fetch(`${getApiUrl()}/api/usage?userId=${userId}`, {
+        headers
+      })
       const data = await response.json()
       
       if (data.success) {
@@ -81,6 +86,7 @@ const UploadBox = ({ onUploadSuccess, onUpgradeClick }) => {
 
       const response = await fetch(`${getApiUrl()}/api/upload`, {
         method: 'POST',
+        headers: getAuthHeaders(),
         body: formData,
       })
 

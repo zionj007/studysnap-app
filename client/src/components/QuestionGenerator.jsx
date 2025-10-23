@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 
 const QuestionGenerator = ({ extractedText, onQuestionsGenerated, canGenerateQuiz, onUpgradeClick }) => {
   const [isGenerating, setIsGenerating] = useState(false)
@@ -8,6 +9,7 @@ const QuestionGenerator = ({ extractedText, onQuestionsGenerated, canGenerateQui
   const [error, setError] = useState(null)
   const [estimatedQuestions, setEstimatedQuestions] = useState(0)
   const [userId] = useState(() => localStorage.getItem('studysnap_userId') || `user_${Date.now()}`)
+  const { getAuthHeaders } = useAuth()
 
   // Calculate estimated number of questions based on text length
   const calculateEstimatedQuestions = (text) => {
@@ -47,9 +49,7 @@ const QuestionGenerator = ({ extractedText, onQuestionsGenerated, canGenerateQui
 
       const response = await fetch(`${getApiUrl()}/api/generate-questions`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ 
           chunk: extractedText,
           userId: userId
@@ -77,9 +77,7 @@ const QuestionGenerator = ({ extractedText, onQuestionsGenerated, canGenerateQui
         console.log('OpenAI not available, automatically using local quiz generator...')
         const localResponse = await fetch(`${getApiUrl()}/api/generate-quiz`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ 
             text: extractedText,
             maxWords: 700
@@ -108,9 +106,7 @@ const QuestionGenerator = ({ extractedText, onQuestionsGenerated, canGenerateQui
         console.log('Final fallback: using local quiz generator...')
         const localResponse = await fetch(`${getApiUrl()}/api/generate-quiz`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ 
             text: extractedText,
             maxWords: 700

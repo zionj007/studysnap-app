@@ -7,7 +7,11 @@ import Dashboard from './components/Dashboard'
 import ProUpgrade from './components/ProUpgrade'
 import StudyTips from './components/StudyTips'
 import WelcomeScreen from './components/WelcomeScreen'
+import Login from './components/Login'
+import Register from './components/Register'
+import AdminPanel from './components/AdminPanel'
 import { UserProvider, useUser } from './contexts/UserContext'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import './App.css'
 
 function AppContent() {
@@ -17,8 +21,12 @@ function AppContent() {
   const [quizHistory, setQuizHistory] = useState([])
   const [showProUpgrade, setShowProUpgrade] = useState(false)
   const [showWelcome, setShowWelcome] = useState(true)
+  const [showLogin, setShowLogin] = useState(false)
+  const [showRegister, setShowRegister] = useState(false)
+  const [showAdminPanel, setShowAdminPanel] = useState(false)
   
   const { user, incrementQuizUsage, canGenerateQuiz, getRemainingQuizzes, upgradeToPro } = useUser()
+  const { isAuthenticated, isAdmin, isPro, logout } = useAuth()
 
   // Load quiz history from localStorage on component mount
   useEffect(() => {
@@ -61,6 +69,24 @@ function AppContent() {
     setCurrentPage('upload')
   }
 
+  // Authentication handlers
+  const handleLogin = (userData, userToken) => {
+    setShowLogin(false)
+    // Update user context with auth data
+    upgradeToPro(userData.isPro ? 'PRO' : 'FREE')
+  }
+
+  const handleRegister = (userData, userToken) => {
+    setShowRegister(false)
+    // Update user context with auth data
+    upgradeToPro(userData.isPro ? 'PRO' : 'FREE')
+  }
+
+  const handleLogout = () => {
+    logout()
+    setShowAdminPanel(false)
+  }
+
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'upload':
@@ -74,8 +100,85 @@ function AppContent() {
                 Upload your study materials and turn them into interactive quizzes
               </p>
               
-              {/* Pro Status Banner */}
-              {!user.isPro && (
+              {/* Authentication Status Banner */}
+              {!isAuthenticated() ? (
+                <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-bold">🔐</span>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">
+                          Create an account for better experience
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Login to save your progress and access premium features
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setShowLogin(true)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all"
+                      >
+                        Login
+                      </button>
+                      <button
+                        onClick={() => setShowRegister(true)}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-all"
+                      >
+                        Sign Up
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-gradient-to-r from-green-50 to-purple-50 border border-green-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 font-bold">✅</span>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">
+                          Welcome back, {user?.name || 'User'}!
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {isPro() ? '⭐ Pro Plan Active' : `${getRemainingQuizzes()} generations remaining this week`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      {isAdmin() && (
+                        <button
+                          onClick={() => setShowAdminPanel(true)}
+                          className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-all"
+                        >
+                          👑 Admin Panel
+                        </button>
+                      )}
+                      {!isPro() && (
+                        <button
+                          onClick={() => setShowProUpgrade(true)}
+                          className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all"
+                        >
+                          Upgrade to Pro
+                        </button>
+                      )}
+                      <button
+                        onClick={handleLogout}
+                        className="bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-all"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Pro Status Banner for non-authenticated users */}
+              {!isAuthenticated() && !user.isPro && (
                 <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mb-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -232,15 +335,48 @@ function AppContent() {
           onClose={() => setShowWelcome(false)}
         />
       )}
+
+      {/* Authentication Modals */}
+      {showLogin && (
+        <Login 
+          onLogin={handleLogin}
+          onSwitchToRegister={() => {
+            setShowLogin(false)
+            setShowRegister(true)
+          }}
+          onClose={() => setShowLogin(false)}
+        />
+      )}
+
+      {showRegister && (
+        <Register 
+          onRegister={handleRegister}
+          onSwitchToLogin={() => {
+            setShowRegister(false)
+            setShowLogin(true)
+          }}
+          onClose={() => setShowRegister(false)}
+        />
+      )}
+
+      {/* Admin Panel */}
+      {showAdminPanel && (
+        <AdminPanel 
+          user={user}
+          onClose={() => setShowAdminPanel(false)}
+        />
+      )}
     </div>
   )
 }
 
 function App() {
   return (
-    <UserProvider>
-      <AppContent />
-    </UserProvider>
+    <AuthProvider>
+      <UserProvider>
+        <AppContent />
+      </UserProvider>
+    </AuthProvider>
   )
 }
 

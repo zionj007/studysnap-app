@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { useAuth } from './AuthContext'
 
 const UserContext = createContext()
 
@@ -11,6 +12,7 @@ export const useUser = () => {
 }
 
 export const UserProvider = ({ children }) => {
+  const { user: authUser, isPro, isAdmin } = useAuth()
   const [user, setUser] = useState({
     isPro: false,
     plan: null,
@@ -33,6 +35,20 @@ export const UserProvider = ({ children }) => {
       }
     }
   }, [])
+
+  // Sync with auth user data
+  useEffect(() => {
+    if (authUser) {
+      setUser(prev => ({
+        ...prev,
+        isPro: isPro() || isAdmin(),
+        plan: authUser.plan || (isAdmin() ? 'admin' : 'FREE'),
+        name: authUser.name,
+        email: authUser.email,
+        role: authUser.role
+      }))
+    }
+  }, [authUser, isPro, isAdmin])
 
   // Save user data to localStorage whenever it changes
   useEffect(() => {
@@ -82,12 +98,12 @@ export const UserProvider = ({ children }) => {
   }
 
   const canGenerateQuiz = () => {
-    if (user.isPro) return true
+    if (user.isPro || isAdmin()) return true
     return user.usage.quizzesToday < 2 // Free plan: 2 generations per week
   }
 
   const getRemainingQuizzes = () => {
-    if (user.isPro) return 'Unlimited'
+    if (user.isPro || isAdmin()) return 'Unlimited'
     return Math.max(0, 2 - user.usage.quizzesToday) // Free plan: 2 generations per week
   }
 

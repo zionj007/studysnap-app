@@ -8,6 +8,7 @@ const uploadRoutes = require('./routes/upload');
 const quizRoutes = require('./routes/quiz');
 const openaiQuizRoutes = require('./routes/openaiQuiz');
 const usageRoutes = require('./routes/usage');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -124,6 +125,7 @@ app.use('/api', uploadRoutes);
 app.use('/api', quizRoutes);
 app.use('/api', openaiQuizRoutes);
 app.use('/api', usageRoutes);
+app.use('/api', authRoutes.router);
 
 // Error handling middleware
 app.use((error, req, res, next) => {

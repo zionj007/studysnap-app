@@ -75,14 +75,29 @@ Return ONLY valid JSON in this exact format:
 // POST /api/generate-questions endpoint
 router.post('/generate-questions', async (req, res) => {
   try {
-    const { chunk, userId } = req.body;
+    const { chunk } = req.body;
+
+    // Get user ID from token or fallback to anonymous
+    let userId = 'anonymous';
+    const authHeader = req.headers['authorization'];
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'studysnap-secret-key-2024');
+        userId = decoded.userId;
+      } catch (error) {
+        // Token invalid, continue as anonymous
+        console.log('Invalid token, using anonymous user');
+      }
+    }
 
     // Check usage limits before processing
     const { canPerformAction, incrementUsage, getUserUsage } = require('../utils/usageTracker');
-    const currentUserId = userId || 'anonymous';
     
-    if (!canPerformAction(currentUserId, 'generate')) {
-      const usage = getUserUsage(currentUserId);
+    if (!canPerformAction(userId, 'generate')) {
+      const usage = getUserUsage(userId);
       return res.status(403).json({
         success: false,
         message: `Generation limit exceeded. ${usage.plan} plan allows ${usage.plan === 'FREE' ? '2' : 'unlimited'} generations per week.`,
@@ -186,7 +201,7 @@ router.post('/generate-questions', async (req, res) => {
     }
 
     // Track successful generation
-    incrementUsage(currentUserId, 'generate');
+    incrementUsage(userId, 'generate');
     
     res.json({
       success: true,

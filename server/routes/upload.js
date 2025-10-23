@@ -120,10 +120,23 @@ const extractTextFromFile = async (filePath, originalName) => {
 // POST /api/upload endpoint
 router.post('/upload', upload.single('file'), async (req, res) => {
   try {
-    // Check usage limits before processing upload
-    const userId = req.body.userId || 'anonymous';
+    // Get user ID from token or fallback to anonymous
+    let userId = 'anonymous';
+    const authHeader = req.headers['authorization'];
     
-    // Import usage tracking functions
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'studysnap-secret-key-2024');
+        userId = decoded.userId;
+      } catch (error) {
+        // Token invalid, continue as anonymous
+        console.log('Invalid token, using anonymous user');
+      }
+    }
+
+    // Check usage limits before processing upload
     const { canPerformAction, incrementUsage, getUserUsage } = require('../utils/usageTracker');
     
     if (!canPerformAction(userId, 'upload')) {
