@@ -83,12 +83,12 @@ export const UserProvider = ({ children }) => {
 
   const canGenerateQuiz = () => {
     if (user.isPro) return true
-    return user.usage.quizzesToday < 3
+    return user.usage.quizzesToday < 2 // Free plan: 2 generations per week
   }
 
   const getRemainingQuizzes = () => {
     if (user.isPro) return 'Unlimited'
-    return Math.max(0, 3 - user.usage.quizzesToday)
+    return Math.max(0, 2 - user.usage.quizzesToday) // Free plan: 2 generations per week
   }
 
   const value = {

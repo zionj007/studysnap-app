@@ -18,7 +18,7 @@ function AppContent() {
   const [showProUpgrade, setShowProUpgrade] = useState(false)
   const [showWelcome, setShowWelcome] = useState(true)
   
-  const { user, incrementQuizUsage, canGenerateQuiz, getRemainingQuizzes } = useUser()
+  const { user, incrementQuizUsage, canGenerateQuiz, getRemainingQuizzes, upgradeToPro } = useUser()
 
   // Load quiz history from localStorage on component mount
   useEffect(() => {
@@ -84,10 +84,10 @@ function AppContent() {
                       </div>
                       <div>
                         <p className="font-semibold text-gray-800">
-                          {getRemainingQuizzes()} quizzes remaining today
+                          {getRemainingQuizzes()} generations remaining this week
                         </p>
                         <p className="text-sm text-gray-600">
-                          Upgrade to Pro for unlimited quizzes and advanced features
+                          Upgrade to Pro for unlimited uploads and generations with enhanced AI
                         </p>
                       </div>
                     </div>
@@ -103,7 +103,10 @@ function AppContent() {
             </div>
             
             <div className="flex justify-center">
-              <UploadBox onUploadSuccess={handleUploadSuccess} />
+              <UploadBox 
+                onUploadSuccess={handleUploadSuccess}
+                onUpgradeClick={() => setShowProUpgrade(true)}
+              />
             </div>
 
             {uploadResult && (
@@ -216,6 +219,7 @@ function AppContent() {
           onClose={() => setShowProUpgrade(false)}
           onUpgrade={(plan) => {
             setShowProUpgrade(false)
+            upgradeToPro(plan)
             // In a real app, this would handle Stripe payment
             console.log(`Upgraded to ${plan}`)
           }}

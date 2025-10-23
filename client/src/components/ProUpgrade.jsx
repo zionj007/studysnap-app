@@ -6,22 +6,22 @@ const ProUpgrade = ({ onClose, onUpgrade }) => {
   const plans = {
     monthly: {
       name: 'Pro Monthly',
-      price: '$9.99',
+      price: '£5.99',
       period: 'per month',
       features: [
+        'Unlimited uploads per week',
         'Unlimited quiz generations',
-        'Advanced AI question types',
+        'Enhanced AI question intelligence',
+        'Context-aware question generation',
+        'Faster response times',
         'Priority OpenAI API access',
-        'Export quizzes to PDF',
-        'Detailed analytics',
-        'Custom quiz themes',
-        'Bulk file processing',
-        'API access for developers'
+        'Advanced content analysis',
+        'Deep contextual understanding'
       ]
     },
     yearly: {
       name: 'Pro Yearly',
-      price: '$99.99',
+      price: '£59.99',
       period: 'per year',
       savings: 'Save 17%',
       features: [
@@ -82,7 +82,7 @@ const ProUpgrade = ({ onClose, onUpgrade }) => {
             >
               <div className="text-center">
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">Pro Monthly</h3>
-                <div className="text-3xl font-bold text-purple-600 mb-1">$9.99</div>
+                <div className="text-3xl font-bold text-purple-600 mb-1">£5.99</div>
                 <p className="text-gray-500">per month</p>
                 {selectedPlan === 'monthly' && (
                   <div className="mt-3">
@@ -110,7 +110,7 @@ const ProUpgrade = ({ onClose, onUpgrade }) => {
               </div>
               <div className="text-center">
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">Pro Yearly</h3>
-                <div className="text-3xl font-bold text-purple-600 mb-1">$99.99</div>
+                <div className="text-3xl font-bold text-purple-600 mb-1">£59.99</div>
                 <p className="text-gray-500">per year</p>
                 {selectedPlan === 'yearly' && (
                   <div className="mt-3">
@@ -156,29 +156,34 @@ const ProUpgrade = ({ onClose, onUpgrade }) => {
                 </thead>
                 <tbody className="text-sm">
                   <tr className="border-b">
-                    <td className="py-2">Quiz generations per day</td>
-                    <td className="text-center py-2">3</td>
+                    <td className="py-2">Uploads per week</td>
+                    <td className="text-center py-2">2</td>
                     <td className="text-center py-2 text-green-600 font-semibold">Unlimited</td>
                   </tr>
                   <tr className="border-b">
-                    <td className="py-2">Question types</td>
+                    <td className="py-2">Quiz generations per week</td>
+                    <td className="text-center py-2">2</td>
+                    <td className="text-center py-2 text-green-600 font-semibold">Unlimited</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2">AI intelligence level</td>
                     <td className="text-center py-2">Basic</td>
-                    <td className="text-center py-2 text-green-600 font-semibold">Advanced AI</td>
+                    <td className="text-center py-2 text-green-600 font-semibold">Enhanced GPT-4</td>
                   </tr>
                   <tr className="border-b">
-                    <td className="py-2">File size limit</td>
-                    <td className="text-center py-2">5MB</td>
-                    <td className="text-center py-2 text-green-600 font-semibold">50MB</td>
+                    <td className="py-2">Question quality</td>
+                    <td className="text-center py-2">Standard</td>
+                    <td className="text-center py-2 text-green-600 font-semibold">Context-aware</td>
                   </tr>
                   <tr className="border-b">
-                    <td className="py-2">Export options</td>
-                    <td className="text-center py-2">None</td>
-                    <td className="text-center py-2 text-green-600 font-semibold">PDF, CSV</td>
+                    <td className="py-2">Response speed</td>
+                    <td className="text-center py-2">Standard</td>
+                    <td className="text-center py-2 text-green-600 font-semibold">Priority</td>
                   </tr>
                   <tr>
-                    <td className="py-2">Analytics</td>
-                    <td className="text-center py-2">Basic</td>
-                    <td className="text-center py-2 text-green-600 font-semibold">Advanced</td>
+                    <td className="py-2">Content analysis depth</td>
+                    <td className="text-center py-2">Surface</td>
+                    <td className="text-center py-2 text-green-600 font-semibold">Deep contextual</td>
                   </tr>
                 </tbody>
               </table>

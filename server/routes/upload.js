@@ -120,6 +120,22 @@ const extractTextFromFile = async (filePath, originalName) => {
 // POST /api/upload endpoint
 router.post('/upload', upload.single('file'), async (req, res) => {
   try {
+    // Check usage limits before processing upload
+    const userId = req.body.userId || 'anonymous';
+    
+    // Import usage tracking functions
+    const { canPerformAction, incrementUsage, getUserUsage } = require('../utils/usageTracker');
+    
+    if (!canPerformAction(userId, 'upload')) {
+      const usage = getUserUsage(userId);
+      return res.status(403).json({
+        success: false,
+        message: `Upload limit exceeded. ${usage.plan} plan allows ${usage.plan === 'FREE' ? '2' : 'unlimited'} uploads per week.`,
+        upgradeRequired: true,
+        currentPlan: usage.plan
+      });
+    }
+
     // Check if file was uploaded
     if (!req.file) {
       return res.status(400).json({
@@ -141,6 +157,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       // Still return success but with empty text
       extractedText = '';
     }
+    
+    // Track successful upload
+    incrementUsage(userId, 'upload');
     
     // Return success response with extracted text
     res.json({

@@ -1,12 +1,39 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import FilePreview from './FilePreview'
 import LoadingAnimation from './LoadingAnimation'
 
-const UploadBox = ({ onUploadSuccess }) => {
+const UploadBox = ({ onUploadSuccess, onUpgradeClick }) => {
   const [selectedFile, setSelectedFile] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadResult, setUploadResult] = useState(null)
   const [error, setError] = useState(null)
+  const [usage, setUsage] = useState(null)
+  const [userId] = useState(() => localStorage.getItem('studysnap_userId') || `user_${Date.now()}`)
+
+  // Fetch usage on component mount
+  useEffect(() => {
+    fetchUsage()
+  }, [])
+
+  const fetchUsage = async () => {
+    try {
+      const getApiUrl = () => {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          return 'http://localhost:3001'
+        }
+        return 'https://studysnap-app.onrender.com'
+      }
+
+      const response = await fetch(`${getApiUrl()}/api/usage?userId=${userId}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setUsage(data.usage)
+      }
+    } catch (error) {
+      console.error('Failed to fetch usage:', error)
+    }
+  }
 
   const handleFileChange = (event) => {
     const file = event.target.files[0]
@@ -41,6 +68,7 @@ const UploadBox = ({ onUploadSuccess }) => {
     try {
       const formData = new FormData()
       formData.append('file', selectedFile)
+      formData.append('userId', userId) // Add userId for usage tracking
 
       // Smart API URL detection
       const getApiUrl = () => {
@@ -65,10 +93,21 @@ const UploadBox = ({ onUploadSuccess }) => {
         const fileInput = document.getElementById('file-input')
         if (fileInput) fileInput.value = ''
         
+        // Refresh usage after successful upload
+        await fetchUsage()
+        
         // Notify parent component
         onUploadSuccess(result)
       } else {
-        setError(result.message || 'Upload failed')
+        // Handle usage limit errors
+        if (result.upgradeRequired) {
+          setError(result.message)
+          if (onUpgradeClick) {
+            onUpgradeClick()
+          }
+        } else {
+          setError(result.message || 'Upload failed')
+        }
       }
     } catch (err) {
       setError('Network error: ' + err.message)
@@ -90,6 +129,28 @@ const UploadBox = ({ onUploadSuccess }) => {
       <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center">
         📁 Upload Study Material
       </h2>
+
+      {/* Usage Display */}
+      {usage && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center">
+              <span className="font-medium text-blue-800">
+                {usage.plan === 'FREE' ? '🆓 Free Plan' : '⭐ Pro Plan'}
+              </span>
+            </div>
+            <div className="text-blue-600">
+              <div>Uploads: {usage.uploads}/{usage.limits.uploadsPerWeek === -1 ? '∞' : usage.limits.uploadsPerWeek}</div>
+              <div>Generations: {usage.generations}/{usage.limits.generationsPerWeek === -1 ? '∞' : usage.limits.generationsPerWeek}</div>
+            </div>
+          </div>
+          {usage.plan === 'FREE' && !usage.canUpload && (
+            <div className="mt-2 text-xs text-orange-600">
+              ⚠️ Upload limit reached. Upgrade to Pro for unlimited uploads!
+            </div>
+          )}
+        </div>
+      )}
 
       {/* File Input Area */}
       <div

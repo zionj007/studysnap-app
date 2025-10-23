@@ -7,6 +7,7 @@ const QuestionGenerator = ({ extractedText, onQuestionsGenerated, canGenerateQui
   const [totalChunks, setTotalChunks] = useState(0)
   const [error, setError] = useState(null)
   const [estimatedQuestions, setEstimatedQuestions] = useState(0)
+  const [userId] = useState(() => localStorage.getItem('studysnap_userId') || `user_${Date.now()}`)
 
   // Calculate estimated number of questions based on text length
   const calculateEstimatedQuestions = (text) => {
@@ -50,7 +51,8 @@ const QuestionGenerator = ({ extractedText, onQuestionsGenerated, canGenerateQui
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          chunk: extractedText 
+          chunk: extractedText,
+          userId: userId
         }),
       })
 
@@ -63,6 +65,13 @@ const QuestionGenerator = ({ extractedText, onQuestionsGenerated, canGenerateQui
         
         // Pass the generated questions to the parent component
         onQuestionsGenerated(result.questions)
+      } else if (result.upgradeRequired) {
+        // Handle usage limit errors
+        setError(result.message)
+        if (onUpgradeClick) {
+          onUpgradeClick()
+        }
+        return
       } else {
         // Any error from OpenAI - automatically fallback to local generator
         console.log('OpenAI not available, automatically using local quiz generator...')

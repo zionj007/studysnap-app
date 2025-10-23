@@ -11,42 +11,47 @@ if (process.env.OPENAI_API_KEY) {
   });
 }
 
-// Master prompt for quiz generation
-const MASTER_PROMPT = `You are an educational assistant. Given the passage below, generate a comprehensive set of multiple-choice questions that thoroughly cover ALL topics and concepts in the text.
+// Enhanced Master prompt for intelligent quiz generation
+const MASTER_PROMPT = `You are an expert educational content analyst and quiz generator. Your task is to deeply analyze the provided text and create intelligent, context-aware quiz questions that demonstrate true understanding of the content.
 
-IMPORTANT: Determine the optimal number of questions based on the text content:
-- For short texts (under 200 words): Generate 5-8 questions
-- For medium texts (200-500 words): Generate 8-12 questions  
-- For long texts (500-1000 words): Generate 12-18 questions
-- For very long texts (1000+ words): Generate 18-25 questions
+ANALYSIS REQUIREMENTS:
+1. First, identify the MAIN TOPIC and SUBTOPICS in the text
+2. Extract KEY CONCEPTS, DEFINITIONS, and TERMINOLOGY
+3. Identify RELATIONSHIPS between different ideas
+4. Note PRACTICAL APPLICATIONS and EXAMPLES
+5. Recognize CAUSE-EFFECT relationships and PROCESSES
+6. Identify COMPARISONS, CONTRASTS, and CATEGORIZATIONS
 
-Ensure complete coverage by including questions about:
-- All key definitions and concepts
-- Important examples and applications
-- Relationships between different topics
-- Practical implications and use cases
-- Specific details and facts mentioned
-- Cause-and-effect relationships
-- Comparisons and contrasts
-- Step-by-step processes or procedures
+QUESTION GENERATION STRATEGY:
+- NEVER use headings, titles, or section names as questions
+- Focus on UNDERSTANDING rather than memorization
+- Create questions that test COMPREHENSION and APPLICATION
+- Ensure questions reflect DEEP CONTEXTUAL UNDERSTANDING
+- Make questions PROGRESSIVE (basic → intermediate → advanced)
 
-For each question, provide:
-- id: unique number
-- question: detailed and specific question that tests deep understanding
-- options: array of 4 answer choices with detailed explanations
-- answer_index: index (0-3) of the correct answer
-- rationale: comprehensive explanation of why the correct answer is right and why others are wrong
+QUESTION DISTRIBUTION (based on text length):
+- Short texts (under 200 words): 5-8 questions
+- Medium texts (200-500 words): 8-12 questions  
+- Long texts (500-1000 words): 12-18 questions
+- Very long texts (1000+ words): 18-25 questions
 
-Guidelines:
-- Cover EVERY major topic and subtopic mentioned in the text
-- Make questions test deep understanding, not just memorization
-- Use specific vocabulary and terminology from the passage
-- Make distractors plausible but clearly distinguishable from the correct answer
-- Ensure questions progress from basic concepts to more complex applications
-- Make each question comprehensive enough to test thorough understanding
-- Include questions about both explicit and implicit information in the text
+QUESTION TYPES TO INCLUDE:
+1. CONCEPTUAL UNDERSTANDING: "What does [concept] mean in the context of..."
+2. APPLICATION QUESTIONS: "How would [concept] apply to..."
+3. RELATIONSHIP QUESTIONS: "What is the relationship between [A] and [B]..."
+4. PROCESS QUESTIONS: "What happens when/if [condition]..."
+5. ANALYSIS QUESTIONS: "Why does [phenomenon] occur..."
+6. SYNTHESIS QUESTIONS: "What would happen if [scenario]..."
 
-Passage:
+QUALITY STANDARDS:
+- Each question must demonstrate understanding of the text's core meaning
+- Avoid trivial or surface-level questions
+- Ensure questions test analytical thinking
+- Make distractors plausible but clearly wrong
+- Use precise language from the text
+- Create questions that require connecting multiple concepts
+
+Passage to analyze:
 """<INSERT_CHUNK_TEXT_HERE>"""
 
 Return ONLY valid JSON in this exact format:
@@ -54,10 +59,15 @@ Return ONLY valid JSON in this exact format:
   "questions": [
     {
       "id": 1,
-      "question": "What is the detailed definition of...?",
-      "options": ["Detailed option A with specific details", "Detailed option B with specific details", "Detailed option C with specific details", "Detailed option D with specific details"],
+      "question": "Based on the text's analysis of [topic], what would be the most likely outcome if [specific scenario]?",
+      "options": [
+        "Detailed option A that demonstrates understanding of the concept",
+        "Detailed option B that shows application of the principle", 
+        "Detailed option C that reflects the text's specific context",
+        "Detailed option D that connects multiple concepts from the text"
+      ],
       "answer_index": 0,
-      "rationale": "Comprehensive explanation of why this is correct, including why other options are incorrect and how this relates to the broader concepts in the text"
+      "rationale": "Comprehensive explanation that shows deep understanding of the text's concepts, why the correct answer is right, why others are wrong, and how this relates to the broader themes and applications discussed in the passage"
     }
   ]
 }`;
@@ -65,7 +75,21 @@ Return ONLY valid JSON in this exact format:
 // POST /api/generate-questions endpoint
 router.post('/generate-questions', async (req, res) => {
   try {
-    const { chunk } = req.body;
+    const { chunk, userId } = req.body;
+
+    // Check usage limits before processing
+    const { canPerformAction, incrementUsage, getUserUsage } = require('../utils/usageTracker');
+    const currentUserId = userId || 'anonymous';
+    
+    if (!canPerformAction(currentUserId, 'generate')) {
+      const usage = getUserUsage(currentUserId);
+      return res.status(403).json({
+        success: false,
+        message: `Generation limit exceeded. ${usage.plan} plan allows ${usage.plan === 'FREE' ? '2' : 'unlimited'} generations per week.`,
+        upgradeRequired: true,
+        currentPlan: usage.plan
+      });
+    }
 
     // Validate input
     if (!chunk || typeof chunk !== 'string' || chunk.trim().length === 0) {
@@ -88,21 +112,24 @@ router.post('/generate-questions', async (req, res) => {
 
     console.log('Generating questions with OpenAI for chunk:', chunk.substring(0, 100) + '...');
 
-    // Call OpenAI API
+    // Call OpenAI API with enhanced parameters for better intelligence
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4", // Using GPT-4 for better understanding and analysis
       messages: [
         {
           role: "system",
-          content: "You are an expert educational content generator. Always respond with valid JSON only."
+          content: "You are an expert educational content analyst and quiz generator. You excel at deep content analysis and creating intelligent, context-aware questions that test true understanding. Always respond with valid JSON only."
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      max_tokens: 2000,
-      temperature: 0.7,
+      max_tokens: 3000, // Increased for more detailed questions
+      temperature: 0.3, // Lower temperature for more focused, consistent responses
+      top_p: 0.9,
+      frequency_penalty: 0.1,
+      presence_penalty: 0.1
     });
 
     const responseText = completion.choices[0]?.message?.content;
@@ -158,6 +185,9 @@ router.post('/generate-questions', async (req, res) => {
       throw new Error('No valid questions found in OpenAI response');
     }
 
+    // Track successful generation
+    incrementUsage(currentUserId, 'generate');
+    
     res.json({
       success: true,
       questions: validQuestions,
