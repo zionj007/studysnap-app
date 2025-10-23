@@ -23,13 +23,43 @@ if (missingEnvVars.length > 0) {
 
 // Middleware
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:5174', 
-    'https://studysnap-frontend.vercel.app',
-    'https://studysnap-frontend-git-clean-main-zionj007.vercel.app',
-    process.env.CORS_ORIGIN
-  ].filter(Boolean),
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'https://studysnap-frontend.vercel.app',
+      'https://studysnap-frontend-git-clean-main-zionj007.vercel.app',
+      'https://studysnap-app.vercel.app',
+      'https://studysnap.vercel.app',
+      'https://studysnap-frontend-git-main-zionj007.vercel.app',
+      'https://studysnap-frontend-git-clean-main-zionj007.vercel.app'
+    ];
+    
+    // Allow any Vercel URL
+    if (origin.includes('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    // Allow any localhost
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return callback(null, true);
+    }
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Allow if set in environment variable
+    if (process.env.CORS_ORIGIN && origin === process.env.CORS_ORIGIN) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
