@@ -86,7 +86,9 @@ const UploadBox = ({ onUploadSuccess, onUpgradeClick }) => {
 
       const response = await fetch(`${getApiUrl()}/api/upload`, {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: {
+          'Authorization': getAuthHeaders()['Authorization'] || ''
+        },
         body: formData,
       })
 

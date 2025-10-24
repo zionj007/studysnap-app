@@ -71,20 +71,33 @@ function AppContent() {
 
   // Authentication handlers
   const handleLogin = (userData, userToken) => {
+    console.log('Login successful:', userData)
     setShowLogin(false)
     // Update user context with auth data
     upgradeToPro(userData.isPro ? 'PRO' : 'FREE')
   }
 
   const handleRegister = (userData, userToken) => {
+    console.log('Register successful:', userData)
     setShowRegister(false)
     // Update user context with auth data
     upgradeToPro(userData.isPro ? 'PRO' : 'FREE')
   }
 
   const handleLogout = () => {
+    console.log('Logging out...')
     logout()
     setShowAdminPanel(false)
+  }
+
+  const handleShowLogin = () => {
+    console.log('Opening login modal...')
+    setShowLogin(true)
+  }
+
+  const handleShowRegister = () => {
+    console.log('Opening register modal...')
+    setShowRegister(true)
   }
 
   const renderCurrentPage = () => {
@@ -119,13 +132,13 @@ function AppContent() {
                     </div>
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => setShowLogin(true)}
+                        onClick={handleShowLogin}
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all"
                       >
                         Login
                       </button>
                       <button
-                        onClick={() => setShowRegister(true)}
+                        onClick={handleShowRegister}
                         className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-all"
                       >
                         Sign Up

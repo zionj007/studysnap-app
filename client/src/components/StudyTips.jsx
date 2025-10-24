@@ -94,3 +94,6 @@ const StudyTips = () => {
 }
 
 export default StudyTips
+
+
+

@@ -68,3 +68,6 @@ const QuizStats = ({ quizResults, totalQuestions, score }) => {
 }
 
 export default QuizStats
+
+
+

@@ -44,3 +44,6 @@ echo "   1. Set up environment variables"
 echo "   2. Configure OpenAI API key"
 echo "   3. Set up Stripe for Pro features"
 echo "   4. Configure CORS origins"
+
+
+

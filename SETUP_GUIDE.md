@@ -94,3 +94,6 @@ Your StudySnap app is ready to use! The app will automatically use a local quiz 
 ---
 
 **StudySnap is ready to help you study! 📸✨**
+
+
+

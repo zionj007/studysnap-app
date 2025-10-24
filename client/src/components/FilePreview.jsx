@@ -64,3 +64,6 @@ const FilePreview = ({ file, extractedText }) => {
 }
 
 export default FilePreview
+
+
+

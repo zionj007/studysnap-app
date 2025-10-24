@@ -54,6 +54,7 @@ export const AuthProvider = ({ children }) => {
   }, [token])
 
   const login = (userData, userToken) => {
+    console.log('AuthContext: Login called with:', userData)
     setUser(userData)
     setToken(userToken)
   }
@@ -87,6 +88,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   const register = (userData, userToken) => {
+    console.log('AuthContext: Register called with:', userData)
     setUser(userData)
     setToken(userToken)
   }

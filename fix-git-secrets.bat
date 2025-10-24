@@ -33,3 +33,6 @@ echo    git commit -m "Clean commit without secrets"
 echo    git push
 echo.
 pause
+
+
+

@@ -167,3 +167,6 @@ Once uploaded successfully, your StudySnap app will be ready for deployment and 
 ---
 
 **Your StudySnap app is now on GitHub and ready for deployment! 🚀**
+
+
+

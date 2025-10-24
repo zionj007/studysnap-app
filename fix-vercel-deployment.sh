@@ -86,3 +86,6 @@ echo "⚠️  Note: This creates a frontend-only deployment."
 echo "   For full-stack deployment, consider using:"
 echo "   - Vercel (frontend) + Render/Railway (backend)"
 echo "   - Or deploy both to Railway/Render"
+
+
+

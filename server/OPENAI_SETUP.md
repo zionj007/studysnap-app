@@ -69,3 +69,6 @@ And returns:
 - **402**: Quota exceeded
 - **400**: Missing or invalid chunk text
 - **500**: Server error or OpenAI API error
+
+
+

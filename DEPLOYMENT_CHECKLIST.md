@@ -78,3 +78,6 @@ PORT=3001
 ---
 
 **🎉 Once deployed, your StudySnap app will be live and ready to use!**
+
+
+

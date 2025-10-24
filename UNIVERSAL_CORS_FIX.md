@@ -61,3 +61,6 @@ app.use(cors({
 - **Your frontend will work!** ✅
 
 **This universal fix covers ALL possible Vercel URL patterns!** 🚀
+
+
+
