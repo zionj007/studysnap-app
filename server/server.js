@@ -152,6 +152,13 @@ app.listen(PORT, () => {
   console.log(`   POST /api/upload - Upload files`);
   console.log(`   POST /api/generate-quiz - Generate quiz questions (local)`);
   console.log(`   POST /api/generate-questions - Generate quiz questions (OpenAI)`);
+  console.log(`   GET  /api/usage - Get user usage`);
+  console.log(`   POST /api/auth/register - User registration`);
+  console.log(`   POST /api/auth/login - User login`);
+  console.log(`   POST /api/auth/logout - User logout`);
+  console.log(`   GET  /api/auth/me - Get current user`);
+  console.log(`   POST /api/auth/upgrade - Upgrade user (admin only)`);
+  console.log(`   GET  /api/auth/users - Get all users (admin only)`);
 });
 
 module.exports = app;
