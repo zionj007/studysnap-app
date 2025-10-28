@@ -1,6 +1,6 @@
-# 📸 StudySnap - AI Study Assistant
+# 📚 Study Eazy Quiz - AI Study Assistant
 
-![StudySnap Logo](https://img.shields.io/badge/StudySnap-AI%20Study%20Assistant-purple?style=for-the-badge&logo=book)
+![Study Eazy Quiz Logo](https://img.shields.io/badge/Study-Eazy-Quiz-purple?style=for-the-badge&logo=book)
 
 A modern, AI-powered study assistant that transforms your study materials into interactive quizzes. Upload PDFs, text files, or images, and get comprehensive multiple-choice questions covering all topics in your material.
 

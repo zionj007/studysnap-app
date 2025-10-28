@@ -1,14 +1,14 @@
 {
-  "name": "studysnap-server",
+  "name": "study-eazy-quiz-server",
   "version": "1.0.0",
-  "description": "Backend server for StudySnap - AI Study Assistant",
+  "description": "Backend server for Study Eazy Quiz - AI Study Assistant",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
   "keywords": [
-    "studysnap",
+    "study-eazy-quiz",
     "express",
     "quiz",
     "study",

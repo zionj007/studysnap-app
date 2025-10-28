@@ -16,8 +16,8 @@ const Navigation = ({ currentPage, onPageChange }) => {
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-2xl mr-2">📸</span>
-              <h1 className="text-xl font-bold text-gray-800">StudySnap</h1>
+              <span className="text-2xl mr-2">📚</span>
+              <h1 className="text-xl font-bold text-gray-800">Study Eazy Quiz</h1>
             </div>
           </div>
 

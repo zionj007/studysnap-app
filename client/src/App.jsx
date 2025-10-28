@@ -107,7 +107,7 @@ function AppContent() {
           <div className="space-y-8">
             <div className="text-center">
               <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                📸 StudySnap
+                📚 Study Eazy Quiz
               </h1>
               <p className="text-lg text-gray-600 mb-8">
                 Upload your study materials and turn them into interactive quizzes
@@ -320,7 +320,7 @@ function AppContent() {
       <footer className="bg-white border-t mt-16">
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="text-center text-gray-600">
-            <p className="mb-2">📸 StudySnap - Turn your study materials into interactive quizzes</p>
+            <p className="mb-2">📚 Study Eazy Quiz - Turn your study materials into interactive quizzes</p>
             <p className="text-sm">
               Built with React, Node.js, and OpenAI • 
               <span className="text-blue-600 ml-1">Pro features available!</span>

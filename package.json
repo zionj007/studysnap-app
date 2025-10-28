@@ -1,7 +1,7 @@
 {
-  "name": "studysnap",
+  "name": "study-eazy-quiz",
   "version": "1.0.0",
-  "description": "StudySnap - AI-powered study assistant that turns your materials into interactive quizzes",
+  "description": "Study Eazy Quiz - AI-powered study assistant that turns your materials into interactive quizzes",
   "main": "index.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
@@ -14,7 +14,7 @@
     "deploy": "bash deploy.sh"
   },
   "keywords": [
-    "studysnap",
+    "study-eazy-quiz",
     "study",
     "quiz",
     "education",

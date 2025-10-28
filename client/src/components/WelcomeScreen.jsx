@@ -5,7 +5,7 @@ const WelcomeScreen = ({ onClose }) => {
 
   const steps = [
     {
-      title: "Welcome to StudySnap! 📸",
+      title: "Welcome to Study Eazy Quiz! 📚",
       content: "Transform your study materials into interactive quizzes with AI-powered question generation.",
       icon: "🎯"
     },

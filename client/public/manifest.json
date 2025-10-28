@@ -1,6 +1,6 @@
 {
-  "name": "StudySnap - AI Study Assistant",
-  "short_name": "StudySnap",
+  "name": "Study Eazy Quiz - AI Study Assistant",
+  "short_name": "Study Eazy Quiz",
   "description": "Transform your study materials into interactive quizzes with AI",
   "start_url": "/",
   "display": "standalone",

@@ -85,7 +85,7 @@ if (!fs.existsSync('uploads')) {
 // Routes
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'StudySnap API Server',
+    message: 'Study Eazy Quiz API Server',
     version: '1.0.0',
     endpoints: {
       upload: 'POST /api/upload',
