@@ -14,16 +14,33 @@ if (process.env.OPENAI_API_KEY) {
 // Enhanced Master prompt for intelligent quiz generation
 const MASTER_PROMPT = `You are an expert educational content analyst and quiz generator. Your task is to deeply analyze the provided text and create intelligent, context-aware quiz questions that demonstrate true understanding of the content.
 
+CRITICAL FILTERING RULES - MUST FOLLOW:
+1. IGNORE and DO NOT generate questions from:
+   - Table of contents (TOC) sections
+   - Topic headings or section titles that appear alone without content
+   - Lines that are just numbers, roman numerals, or single words
+   - Structural elements like "Chapter 1", "Section 2", etc. without accompanying content
+   - Page references (e.g., "... 5" or "... 10")
+   - Any line that is purely organizational/navigational
+
+2. ONLY generate questions from:
+   - Substantive content with actual explanations, descriptions, or information
+   - Paragraphs that contain full sentences and meaningful content
+   - Content that explains concepts, processes, or ideas
+   - Text that provides context, examples, or detailed information
+
 ANALYSIS REQUIREMENTS:
-1. First, identify the MAIN TOPIC and SUBTOPICS in the text
-2. Extract KEY CONCEPTS, DEFINITIONS, and TERMINOLOGY
+1. First, identify the MAIN TOPIC and SUBTOPICS in the text (but don't use topic names as questions)
+2. Extract KEY CONCEPTS, DEFINITIONS, and TERMINOLOGY from substantive content
 3. Identify RELATIONSHIPS between different ideas
 4. Note PRACTICAL APPLICATIONS and EXAMPLES
 5. Recognize CAUSE-EFFECT relationships and PROCESSES
 6. Identify COMPARISONS, CONTRASTS, and CATEGORIZATIONS
 
 QUESTION GENERATION STRATEGY:
-- NEVER use headings, titles, or section names as questions
+- NEVER use headings, titles, section names, table of contents, or topic lists as questions
+- NEVER generate questions from standalone topic headings without content
+- ONLY generate questions from paragraphs and sentences that contain actual explanations or information
 - Focus on UNDERSTANDING rather than memorization
 - Create questions that test COMPREHENSION and APPLICATION
 - Ensure questions reflect DEEP CONTEXTUAL UNDERSTANDING
@@ -122,10 +139,23 @@ router.post('/generate-questions', async (req, res) => {
       });
     }
 
-    // Replace placeholder in master prompt with actual chunk text
-    const prompt = MASTER_PROMPT.replace('<INSERT_CHUNK_TEXT_HERE>', chunk.trim());
+    // Filter out table of contents, topic headings, and structural elements
+    const { filterContentForQuiz } = require('../utils/contentFilter');
+    const filteredChunk = filterContentForQuiz(chunk.trim());
+    
+    // Check if filtered chunk has sufficient content
+    if (!filteredChunk || filteredChunk.trim().length < 50) {
+      return res.status(400).json({
+        success: false,
+        message: 'Insufficient substantive content after filtering. The text appears to contain only table of contents, headings, or structural elements without actual content.'
+      });
+    }
 
-    console.log('Generating questions with OpenAI for chunk:', chunk.substring(0, 100) + '...');
+    // Replace placeholder in master prompt with filtered chunk text
+    const prompt = MASTER_PROMPT.replace('<INSERT_CHUNK_TEXT_HERE>', filteredChunk);
+
+    console.log('Generating questions with OpenAI for chunk:', filteredChunk.substring(0, 100) + '...');
+    console.log('Original chunk length:', chunk.length, 'Filtered chunk length:', filteredChunk.length);
 
     // Call OpenAI API with enhanced parameters for better intelligence
     const completion = await openai.chat.completions.create({
@@ -133,7 +163,7 @@ router.post('/generate-questions', async (req, res) => {
       messages: [
         {
           role: "system",
-          content: "You are an expert educational content analyst and quiz generator. You excel at deep content analysis and creating intelligent, context-aware questions that test true understanding. Always respond with valid JSON only."
+          content: "You are an expert educational content analyst and quiz generator. You excel at deep content analysis and creating intelligent, context-aware questions that test true understanding. CRITICAL: You must IGNORE table of contents, topic headings without content, and structural elements. ONLY generate questions from substantive content with actual explanations and information. Always respond with valid JSON only."
         },
         {
           role: "user",
