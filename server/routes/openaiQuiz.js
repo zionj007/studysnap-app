@@ -14,20 +14,30 @@ if (process.env.OPENAI_API_KEY) {
 // Enhanced Master prompt for intelligent quiz generation
 const MASTER_PROMPT = `You are an expert educational content analyst and quiz generator. Your task is to deeply analyze the provided text and create intelligent, context-aware quiz questions that demonstrate true understanding of the content.
 
-CRITICAL FILTERING RULES - MUST FOLLOW:
+CRITICAL FILTERING RULES - MUST FOLLOW ABSOLUTELY:
 1. IGNORE and DO NOT generate questions from:
-   - Table of contents (TOC) sections
-   - Topic headings or section titles that appear alone without content
-   - Lines that are just numbers, roman numerals, or single words
-   - Structural elements like "Chapter 1", "Section 2", etc. without accompanying content
-   - Page references (e.g., "... 5" or "... 10")
-   - Any line that is purely organizational/navigational
+   - Table of contents (TOC) sections - COMPLETELY IGNORE
+   - Topic headings or section titles that appear alone without content - COMPLETELY IGNORE
+   - Lines that are just numbers, roman numerals, or single words - COMPLETELY IGNORE
+   - Structural elements like "Chapter 1", "Section 2", "Part 3", etc. - COMPLETELY IGNORE
+   - Page references (e.g., "... 5" or "... 10") - COMPLETELY IGNORE
+   - Any line that is purely organizational/navigational - COMPLETELY IGNORE
+   - Topic lists (e.g., "1. Topic A", "2. Topic B") - COMPLETELY IGNORE
+   - Chapter titles without explanations - COMPLETELY IGNORE
 
 2. ONLY generate questions from:
    - Substantive content with actual explanations, descriptions, or information
-   - Paragraphs that contain full sentences and meaningful content
-   - Content that explains concepts, processes, or ideas
+   - Paragraphs that contain full sentences and meaningful content (at least 2-3 sentences)
+   - Content that explains concepts, processes, or ideas in detail
    - Text that provides context, examples, or detailed information
+   - Content that has verbs, complete thoughts, and explanations
+
+3. QUESTION VALIDATION - DO NOT CREATE:
+   - Questions asking "What is Chapter X?" or "What is Topic Y?"
+   - Questions asking to identify topics from a list
+   - Questions about table of contents structure
+   - Questions that are just asking for topic names without context
+   - Questions that test memorization of topic/chapter names
 
 ANALYSIS REQUIREMENTS:
 1. First, identify the MAIN TOPIC and SUBTOPICS in the text (but don't use topic names as questions)
@@ -150,6 +160,18 @@ router.post('/generate-questions', async (req, res) => {
         message: 'Insufficient substantive content after filtering. The text appears to contain only table of contents, headings, or structural elements without actual content.'
       });
     }
+    
+    // Check if filtered content has enough sentences (at least 2-3 sentences)
+    const sentences = filteredChunk.match(/[.!?]+/g);
+    const sentenceCount = sentences ? sentences.length : 0;
+    const wordCount = filteredChunk.split(/\s+/).filter(w => w.length > 0).length;
+    
+    if (sentenceCount < 2 || wordCount < 30) {
+      return res.status(400).json({
+        success: false,
+        message: 'Insufficient substantive content. The text needs at least 2-3 complete sentences with explanations or information, not just topic headings or structural elements.'
+      });
+    }
 
     // Replace placeholder in master prompt with filtered chunk text
     const prompt = MASTER_PROMPT.replace('<INSERT_CHUNK_TEXT_HERE>', filteredChunk);
@@ -163,7 +185,7 @@ router.post('/generate-questions', async (req, res) => {
       messages: [
         {
           role: "system",
-          content: "You are an expert educational content analyst and quiz generator. You excel at deep content analysis and creating intelligent, context-aware questions that test true understanding. CRITICAL: You must IGNORE table of contents, topic headings without content, and structural elements. ONLY generate questions from substantive content with actual explanations and information. Always respond with valid JSON only."
+          content: "You are an expert educational content analyst and quiz generator. You excel at deep content analysis and creating intelligent, context-aware questions that test true understanding. CRITICAL RULES: 1) COMPLETELY IGNORE table of contents, topic headings, chapter titles, and structural elements. 2) ONLY generate questions from substantive content with actual explanations, descriptions, and information (at least 2-3 sentences). 3) NEVER create questions asking 'What is Chapter X?' or 'What is Topic Y?' - these will be automatically rejected. 4) ONLY create questions from paragraphs that explain concepts, processes, or ideas in detail. Always respond with valid JSON only."
         },
         {
           role: "user",
@@ -214,8 +236,8 @@ router.post('/generate-questions', async (req, res) => {
       throw new Error('Invalid response structure: questions array not found');
     }
 
-    // Validate each question
-    const validQuestions = questionsData.questions.filter(question => {
+    // Validate each question structure
+    const structurallyValidQuestions = questionsData.questions.filter(question => {
       return question.id && 
              question.question && 
              Array.isArray(question.options) && 
@@ -226,8 +248,21 @@ router.post('/generate-questions', async (req, res) => {
              question.rationale;
     });
 
-    if (validQuestions.length === 0) {
+    if (structurallyValidQuestions.length === 0) {
       throw new Error('No valid questions found in OpenAI response');
+    }
+
+    // Filter out questions about topics, TOC, or chapters
+    const { filterQuestionsAboutTopics } = require('../utils/contentFilter');
+    const validQuestions = filterQuestionsAboutTopics(structurallyValidQuestions);
+
+    if (validQuestions.length === 0) {
+      throw new Error('All generated questions were about topics, table of contents, or chapters. Please ensure the content contains substantive explanations and information, not just topic lists or structural elements.');
+    }
+
+    // Log if questions were filtered
+    if (validQuestions.length < structurallyValidQuestions.length) {
+      console.log(`Filtered out ${structurallyValidQuestions.length - validQuestions.length} questions about topics/TOC/chapters`);
     }
 
     // Track successful generation

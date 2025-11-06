@@ -15,8 +15,16 @@ function filterContentForQuiz(text) {
   // Remove table of contents patterns more aggressively
   // Matches patterns like "1. Topic Name ... 5" or "Chapter 1: Title ... 10"
   filteredText = filteredText.replace(/^(?:table\s+of\s+contents?|contents?|toc)\s*:?\s*$/gmi, '');
-  filteredText = filteredText.replace(/^\s*(?:chapter|section|part)\s+\d+[.:]\s*[^\n]*(?:\s+\.{3,}\s*\d+)?\s*$/gmi, '');
-  filteredText = filteredText.replace(/^\s*\d+[.)]\s+[^\n]*(?:\s+\.{3,}\s*\d+)?\s*$/gmi, '');
+  
+  // Remove ALL chapter/section/part patterns (even without page numbers)
+  filteredText = filteredText.replace(/^\s*(?:chapter|section|part|unit|module)\s+\d+[.:\s]*[^\n]*$/gmi, '');
+  filteredText = filteredText.replace(/^\s*(?:chapter|section|part|unit|module)\s+[ivxlcdm]+[.:\s]*[^\n]*$/gmi, '');
+  
+  // Remove numbered lists that look like TOC (e.g., "1. Topic Name" or "1) Topic Name")
+  filteredText = filteredText.replace(/^\s*\d+[.)]\s+[^\n]{0,60}(?:\s+\.{2,}\s*\d+)?\s*$/gm, '');
+  
+  // Remove roman numeral lists that look like TOC
+  filteredText = filteredText.replace(/^\s*[ivxlcdm]+[.)]\s+[^\n]{0,60}(?:\s+\.{2,}\s*\d+)?\s*$/gmi, '');
   
   // Remove lines that are just numbers or page references (e.g., "... 5" or "... 10")
   filteredText = filteredText.replace(/^\s*\.{2,}\s*\d+\s*$/gmi, '');
@@ -25,45 +33,62 @@ function filterContentForQuiz(text) {
   // This matches lines that are standalone and look like headings
   const lines = filteredText.split('\n');
   const filteredLines = [];
+  let consecutiveHeadings = 0;
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     const nextLine = i < lines.length - 1 ? lines[i + 1].trim() : '';
     const prevLine = i > 0 ? lines[i - 1].trim() : '';
+    const nextNextLine = i < lines.length - 2 ? lines[i + 2].trim() : '';
     
     // Skip empty lines
     if (line.length === 0) {
+      consecutiveHeadings = 0;
       filteredLines.push(lines[i]);
       continue;
     }
     
     // Skip table of contents entries (lines with dots leading to page numbers)
     if (line.match(/\.{3,}\s*\d+$/)) {
+      consecutiveHeadings++;
+      continue;
+    }
+    
+    // Skip lines that match chapter/section patterns
+    if (line.match(/^(?:chapter|section|part|unit|module)\s+\d+/i)) {
+      consecutiveHeadings++;
+      continue;
+    }
+    
+    // Skip numbered topic lists (e.g., "1. Topic", "2. Topic")
+    if (line.match(/^\s*\d+[.)]\s+[^\n]{0,60}$/) && wordCount(line) <= 8) {
+      consecutiveHeadings++;
       continue;
     }
     
     // Skip lines that are just numbers, roman numerals, or single words (likely topic headings)
-    // But keep them if they're followed by substantial content
     if (isLikelyTopicHeading(line)) {
-      // Check if next line has substantial content (more than 30 characters and not another heading)
-      if (nextLine.length > 30 && !isLikelyTopicHeading(nextLine)) {
-        // Keep the heading if it's followed by content
+      consecutiveHeadings++;
+      
+      // If we have multiple consecutive headings, this is likely a topic list - skip all
+      if (consecutiveHeadings >= 2 || isLikelyTopicHeading(nextLine)) {
+        continue;
+      }
+      
+      // Check if next line has substantial content (more than 50 characters and not another heading)
+      if (nextLine.length > 50 && !isLikelyTopicHeading(nextLine) && !isLikelyTopicHeading(nextNextLine)) {
+        // Keep the heading if it's followed by substantial content
+        consecutiveHeadings = 0;
         filteredLines.push(lines[i]);
       } else {
-        // Check if this is part of a topic list (multiple topic headings in a row)
-        // If previous line was also a topic heading, skip this one
-        if (isLikelyTopicHeading(prevLine)) {
-          continue;
-        }
-        // If next line is also a topic heading, skip this one (it's a topic list)
-        if (isLikelyTopicHeading(nextLine)) {
-          continue;
-        }
-        // Otherwise, it might be a standalone heading - skip it if no content follows
+        // Skip standalone headings without content
         continue;
       }
       continue;
     }
+    
+    // Reset consecutive headings counter when we find real content
+    consecutiveHeadings = 0;
     
     // Keep all other lines
     filteredLines.push(lines[i]);
@@ -75,7 +100,18 @@ function filterContentForQuiz(text) {
   filteredText = filteredText.replace(/\n{3,}/g, '\n\n');
   filteredText = filteredText.trim();
   
+  // Final pass: Remove any remaining TOC-like patterns
+  filteredText = filteredText.replace(/^\s*\d+[.)]\s+[^\n]{0,50}\s*$/gm, '');
+  filteredText = filteredText.replace(/^\s*[ivxlcdm]+[.)]\s+[^\n]{0,50}\s*$/gmi, '');
+  
   return filteredText;
+}
+
+/**
+ * Helper function to count words in a line
+ */
+function wordCount(line) {
+  return line.split(/\s+/).filter(w => w.length > 0).length;
 }
 
 /**
@@ -93,24 +129,39 @@ function isLikelyTopicHeading(line) {
   }
   
   // Lines that start with numbers/roman numerals followed by a topic (e.g., "1. Topic Name")
-  if (line.match(/^(?:[ivxlcdm]+|[0-9]+)[.)]\s+[^\n]{0,50}$/i) && wordCount <= 6) {
+  if (line.match(/^(?:[ivxlcdm]+|[0-9]+)[.)]\s+[^\n]{0,60}$/i) && wordCount <= 8) {
     return true;
   }
   
-  // Lines that are very short (3 words or less) and don't end with punctuation
-  if (wordCount <= 3 && !line.match(/[.!?]$/)) {
+  // Lines that match chapter/section patterns
+  if (line.match(/^(?:chapter|section|part|unit|module)\s+\d+/i)) {
     return true;
+  }
+  
+  // Lines that are very short (4 words or less) and don't end with punctuation
+  if (wordCount <= 4 && !line.match(/[.!?]$/)) {
+    // But allow if it's a complete sentence starting with common words
+    if (!line.match(/^(the|a|an|this|that|these|those|what|how|why|when|where|who)\s+/i)) {
+      return true;
+    }
   }
   
   // Lines that are all caps and short (likely headings)
-  if (line === line.toUpperCase() && wordCount <= 5 && line.length < 50) {
+  if (line === line.toUpperCase() && wordCount <= 6 && line.length < 60) {
     return true;
   }
   
   // Lines that look like topic lists (short lines without punctuation)
-  if (wordCount <= 4 && !line.match(/[.!?:]$/) && line.length < 60) {
+  if (wordCount <= 5 && !line.match(/[.!?:]$/) && line.length < 70) {
     // Check if it's not a complete sentence
-    if (!line.match(/^(the|a|an|this|that|these|those)\s+/i) || wordCount <= 2) {
+    if (!line.match(/^(the|a|an|this|that|these|those|what|how|why|when|where|who|in|on|at|for|with|by)\s+/i) || wordCount <= 3) {
+      return true;
+    }
+  }
+  
+  // Lines that are just topic names (no verbs, no complete thoughts)
+  if (wordCount <= 6 && !line.match(/\b(is|are|was|were|has|have|had|do|does|did|can|could|will|would|should|may|might)\b/i)) {
+    if (!line.match(/[.!?]$/) && line.length < 80) {
       return true;
     }
   }
@@ -178,9 +229,75 @@ function removeTableOfContents(text) {
   return filteredLines.join('\n');
 }
 
+/**
+ * Validates if a question is about topics, TOC, or chapters (should be rejected)
+ * @param {Object} question - The question object to validate
+ * @returns {boolean} True if question should be rejected (is about topic/TOC)
+ */
+function isQuestionAboutTopicOrTOC(question) {
+  if (!question || !question.question) {
+    return false;
+  }
+  
+  const questionText = question.question.toLowerCase();
+  const rationale = (question.rationale || '').toLowerCase();
+  const combinedText = questionText + ' ' + rationale;
+  
+  // Check if question mentions table of contents
+  if (combinedText.match(/\b(table\s+of\s+contents?|contents?|toc)\b/)) {
+    return true;
+  }
+  
+  // Check if question is asking about chapter/section numbers
+  if (combinedText.match(/\b(chapter|section|part|unit|module)\s+\d+\b/)) {
+    return true;
+  }
+  
+  // Check if question is asking "what is chapter X" or "what is topic X"
+  if (questionText.match(/\b(what\s+is|what\s+are|which\s+is|which\s+are)\s+(chapter|section|part|topic|heading)\b/)) {
+    return true;
+  }
+  
+  // Check if question is asking about topic names without context
+  if (questionText.match(/\b(what\s+is|what\s+are|which\s+is|which\s+are|name|list)\s+[^?]{0,30}\?$/)) {
+    // If it's a very short question asking "what is X?" where X is likely a topic name
+    const questionWords = questionText.split(/\s+/).length;
+    if (questionWords <= 8) {
+      // Check if it's asking about a topic name (not a concept)
+      if (!questionText.match(/\b(concept|idea|principle|theory|process|method|technique|approach|definition|meaning)\b/)) {
+        return true;
+      }
+    }
+  }
+  
+  // Check if question is just asking to identify a topic from a list
+  if (questionText.match(/\b(which\s+of\s+the\s+following|identify|select)\s+[^?]{0,30}(topic|chapter|section|heading)\b/)) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Filters out questions that are about topics, TOC, or chapters
+ * @param {Array} questions - Array of question objects
+ * @returns {Array} Filtered array with only substantive questions
+ */
+function filterQuestionsAboutTopics(questions) {
+  if (!Array.isArray(questions)) {
+    return [];
+  }
+  
+  return questions.filter(question => {
+    return !isQuestionAboutTopicOrTOC(question);
+  });
+}
+
 module.exports = {
   filterContentForQuiz,
   removeTableOfContents,
-  isLikelyTopicHeading
+  isLikelyTopicHeading,
+  isQuestionAboutTopicOrTOC,
+  filterQuestionsAboutTopics
 };
 
